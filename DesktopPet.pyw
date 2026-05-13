@@ -187,22 +187,12 @@ class CoconutPet:
             if self.happiness > 70: wc *= 1.5
             elif self.happiness < 20: wc *= 0.5
 
-            # Chase: random trigger (always works) + mode trigger
-            if r < 0.018:
-                mx, my = self.win.winfo_pointerxy()
-                cx = self.win.winfo_x() + self.W // 2
-                cy = self.win.winfo_y() + self.H // 2
-                dist = math.hypot(mx - cx, my - cy)
-                # 随机触发：鼠标在视野内就追
-                if dist < 500:
-                    self._start_chase()
-            # 追鼠标模式：更频繁地检测
-            elif self.chase_on and r < 0.035:
-                mx, my = self.win.winfo_pointerxy()
-                cx = self.win.winfo_x() + self.W // 2
-                cy = self.win.winfo_y() + self.H // 2
-                if math.hypot(mx - cx, my - cy) < 400:
-                    self._start_chase()
+            # Chase: 纯随机触发，不管鼠标在哪
+            if r < 0.02:
+                self._start_chase()
+            # 追鼠标模式：频率更高
+            elif self.chase_on and r < 0.04:
+                self._start_chase()
             elif r < wc:
                 self._start_walk()
             elif r < 0.012:
