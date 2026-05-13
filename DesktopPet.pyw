@@ -150,6 +150,8 @@ class CoconutPet:
         m.add_command(label="\u274c 退出", command=self.on_exit)
 
         self._greet()
+        # 启动后立刻去边缘
+        self._start_walk()
         self._tick()
 
     def _greet(self):
@@ -210,6 +212,17 @@ class CoconutPet:
 
         if self.state in ("stretch", "sit") and self.st > 40:
             self.state = "idle"; self.mood = "happy" if self.happiness > 30 else "sleepy"
+        
+        # 空闲时检查是否在中心区域，是的话强制去边缘
+        if self.state == "idle" and self.st > 30 and random.random() < 0.05:
+            cx = self.win.winfo_x() + self.W // 2
+            cy = self.win.winfo_y() + self.H // 2
+            # 中心区域：距离屏幕中心 < 屏幕短边的 1/3
+            center_x, center_y = self.sw / 2, self.sh / 2
+            max_dist = min(self.sw, self.sh) / 3
+            if math.hypot(cx - center_x, cy - center_y) < max_dist:
+                self._start_walk()
+                return"
 
         if self.state == "walk": self._do_walk()
         if self.state == "chase": self._do_chase()
