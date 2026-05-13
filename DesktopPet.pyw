@@ -136,7 +136,8 @@ class CoconutPet:
         m.add_command(label="\U0001f60a 换心情", command=self.cycle_mood)
         m.add_command(label="\U0001f4ac 说句话", command=self.say_something)
         m.add_command(label="\U0001f36a 喂食", command=self.spawn_food)
-        m.add_command(label="\U0001f43e 追鼠标", command=self.toggle_chase)
+        m.add_command(label="\U0001f43e 追鼠标模式", command=self.toggle_chase)
+        m.add_command(label="\U0001f43e 追一次", command=self.chase_once)
         m.add_separator()
         m.add_command(label="\U0001f4cc 置顶", command=self.toggle_top)
         m.add_command(label="\U0001f39a 透明度", command=self.adjust_opacity)
@@ -184,8 +185,17 @@ class CoconutPet:
             if self.happiness > 70: wc *= 1.5
             elif self.happiness < 20: wc *= 0.5
 
-            # Chase: check if mouse is nearby
-            if self.chase_on and r < 0.04:
+            # Chase: random trigger (always works) + mode trigger
+            if r < 0.018:
+                mx, my = self.win.winfo_pointerxy()
+                cx = self.win.winfo_x() + self.W // 2
+                cy = self.win.winfo_y() + self.H // 2
+                dist = math.hypot(mx - cx, my - cy)
+                # 随机触发：鼠标在视野内就追
+                if dist < 500:
+                    self._start_chase()
+            # 追鼠标模式：更频繁地检测
+            elif self.chase_on and r < 0.035:
                 mx, my = self.win.winfo_pointerxy()
                 cx = self.win.winfo_x() + self.W // 2
                 cy = self.win.winfo_y() + self.H // 2
@@ -229,8 +239,22 @@ class CoconutPet:
 
     def toggle_chase(self):
         self.chase_on = not self.chase_on
-        self.say("追鼠标 \U0001f7e2" if self.chase_on else "不追了 \U0001f534")
+        self.say("追鼠标模式 " + ("\U0001f7e2" if self.chase_on else "\U0001f534"))
         if self.chase_on: self._particles(3, "heart")
+
+    def chase_once(self):
+        """菜单触发：立刻追一次鼠标"""
+        if self.state in ("walk", "chase", "eat"):
+            self.say("等一下嘛...")
+            return
+        mx, my = self.win.winfo_pointerxy()
+        cx = self.win.winfo_x() + self.W // 2
+        cy = self.win.winfo_y() + self.H // 2
+        dist = math.hypot(mx - cx, my - cy)
+        if dist < 30:
+            self.say("就在你旁边啦！\U0001f965")
+            return
+        self._start_chase()
 
     def _start_chase(self):
         if self.state in ("walk", "chase", "eat"): return
