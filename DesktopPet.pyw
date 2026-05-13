@@ -285,6 +285,13 @@ class CoconutPet:
                 self.say(random.choice(["抓到啦！", "嘿嘿 \U0001f965", "找到你啦 \u2764\ufe0f"]))
             return
 
+        # 单次追逐最长 15 秒 — 防止一直追停不下来
+        self.st += 1
+        if self.st > 500:
+            self.state = "idle"; self.cur_speed = 0.0
+            self.say("追够了歇会儿 🥥")
+            return
+
         # 鼠标一直没动超过 3 秒 — 放弃
         if self.mouse_still_frames > 100:
             self.state = "idle"; self.cur_speed = 0.0
