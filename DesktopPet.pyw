@@ -187,11 +187,11 @@ class CoconutPet:
             if self.happiness > 70: wc *= 1.5
             elif self.happiness < 20: wc *= 0.5
 
-            # Chase: 纯随机触发，不管鼠标在哪
-            if r < 0.02:
+            # Chase: 随机触发（~每10秒一次）
+            if r < 0.003:
                 self._start_chase()
-            # 追鼠标模式：频率更高
-            elif self.chase_on and r < 0.04:
+            # 追鼠标模式：频率稍高（~每5秒一次）
+            elif self.chase_on and r < 0.006:
                 self._start_chase()
             elif r < wc:
                 self._start_walk()
