@@ -265,14 +265,16 @@ class CoconutPet:
         self.say("来追你啦！\U0001f3c3")
 
     def _do_chase(self):
-        """Chase mouse using winfo_pointerxy() — works even when cursor is outside the window"""
-        cx, cy = self.win.winfo_x(), self.win.winfo_y()
-        mx, my = self.win.winfo_pointerxy()  # real-time cursor position
+        """Chase mouse — use CENTER of window for catch detection"""
+        # Use center of pet window for distance calculation
+        cx = self.win.winfo_x() + self.W // 2
+        cy = self.win.winfo_y() + self.H // 2
+        mx, my = self.win.winfo_pointerxy()
         dx, dy = mx - cx, my - cy
         dist = math.hypot(dx, dy)
 
-        if dist < 20:  # Caught the cursor!
-            self.state = "happy"; self.st = 0
+        if dist < 35:  # Caught the cursor! (center to cursor)
+            self.state = "happy"; self.st = 0; self.cur_speed = 0.0
             self.mood = "love"
             self.happiness = min(100, self.happiness + 3)
             self._particles(5, "heart")
@@ -280,18 +282,24 @@ class CoconutPet:
                 self.say(random.choice(["抓到啦！", "嘿嘿 \U0001f965", "找到你啦 \u2764\ufe0f"]))
             return
 
-        speed = self.WALK_SPEED * 1.2
-        if dist > speed:
-            nx = cx + (dx / dist) * speed
-            ny = cy + (dy / dist) * speed
+        max_speed = self.WALK_SPEED * 1.3
+        if self.cur_speed < max_speed:
+            self.cur_speed = min(max_speed, self.cur_speed + 0.5)
+        if dist < 50 and self.cur_speed > 0.5:
+            self.cur_speed = max(0.5, self.cur_speed * (dist / 50))
+
+        if dist > self.cur_speed:
+            # Move the window's top-left corner, not center
+            nx = (cx - self.W//2) + (dx / dist) * self.cur_speed
+            ny = (cy - self.H//2) + (dy / dist) * self.cur_speed
             self.win.geometry(f"+{int(nx)}+{int(ny)}")
             self.mood = "happy"
         else:
-            self.win.geometry(f"+{mx}+{my}")
+            self.win.geometry(f"+{mx - self.W//2}+{my - self.H//2}")
 
         self.st += 1
-        if self.st > 300:  # timeout ~9s
-            self.state = "idle"
+        if self.st > 300:
+            self.state = "idle"; self.cur_speed = 0.0
             self.say("跑太快了追不上 \U0001f62e\U0001f4a8")
 
     # ── Food ──
