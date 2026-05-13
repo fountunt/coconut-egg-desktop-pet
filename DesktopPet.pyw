@@ -277,31 +277,35 @@ class CoconutPet:
 
         # 抓到光标
         if dist < 35:
-            self.state = "happy"; self.st = 0; self.cur_speed = 0.0
-            self.mood = "love"
+            self.cur_speed = 0.0
             self.happiness = min(100, self.happiness + 3)
             self._particles(5, "heart")
             if random.random() < 0.3:
                 self.say(random.choice(["抓到啦！", "嘿嘿 \U0001f965", "找到你啦 \u2764\ufe0f"]))
+            # 追到后回到边缘
+            self._go_back_to_edge()
             return
 
         # 单次追逐最长 15 秒 — 防止一直追停不下来
         self.st += 1
         if self.st > 500:
-            self.state = "idle"; self.cur_speed = 0.0
+            self.cur_speed = 0.0
             self.say("追够了歇会儿 🥥")
+            self._go_back_to_edge()
             return
 
         # 鼠标一直没动超过 3 秒 — 放弃
         if self.mouse_still_frames > 100:
-            self.state = "idle"; self.cur_speed = 0.0
+            self.cur_speed = 0.0
             self.say("不跟我玩 😢")
+            self._go_back_to_edge()
             return
 
         # 鼠标跑太远 — 放弃
         if dist > 1000:
-            self.state = "idle"; self.cur_speed = 0.0
+            self.cur_speed = 0.0
             self.say("跑太远了追不上...")
+            self._go_back_to_edge()
             return
 
         # 加减速移动
@@ -348,13 +352,38 @@ class CoconutPet:
 
     def _start_walk(self):
         if self.state == "walk": return
-        self.cur_speed = 0.5  # start slow for smooth acceleration
-        m = self.SCREEN_MARGIN
-        self.wtx = random.randint(m, self.sw - m - self.W)
-        self.wty = random.randint(m, self.sh - m - self.H)
+        self.cur_speed = 0.5
+        # 平时在屏幕边缘走动
+        self._pick_edge_target()
         self.state = "walk"; self.st = 0
         self.mood = random.choice(["happy", "happy", "derp", "happy"])
         self.wp = random.randint(30, 100)
+
+    def _pick_edge_target(self):
+        """在屏幕边缘选一个位置"""
+        m = self.SCREEN_MARGIN
+        edge = random.randint(0, 3)
+        if edge == 0:  # 上边缘
+            self.wtx = random.randint(m, self.sw - m - self.W)
+            self.wty = m
+        elif edge == 1:  # 下边缘
+            self.wtx = random.randint(m, self.sw - m - self.W)
+            self.wty = self.sh - m - self.H
+        elif edge == 2:  # 左边缘
+            self.wtx = m
+            self.wty = random.randint(m, self.sh - m - self.H)
+        else:  # 右边缘
+            self.wtx = self.sw - m - self.W
+            self.wty = random.randint(m, self.sh - m - self.H)
+
+    def _go_back_to_edge(self):
+        """追完后回到屏幕边缘"""
+        if self.state == "walk": return
+        self.cur_speed = 0.5
+        self._pick_edge_target()
+        self.state = "walk"; self.st = 0
+        self.mood = "happy"
+        self.wp = 10
 
     def _do_walk(self):
         cx, cy = self.win.winfo_x(), self.win.winfo_y()
