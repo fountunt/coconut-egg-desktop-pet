@@ -82,7 +82,7 @@ class Food:
 class CoconutPet:
     W, H = 160, 180
     WALK_SPEED = 2.5
-    SCREEN_MARGIN = 50
+    SCREEN_MARGIN = 10
 
     C = {"shell": "#5D4037", "shell_l": "#795548", "shell_d": "#3E2723",
          "yolk": "#FFD54F", "yolk_l": "#FFE082",
