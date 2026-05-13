@@ -222,7 +222,7 @@ class CoconutPet:
             max_dist = min(self.sw, self.sh) / 3
             if math.hypot(cx - center_x, cy - center_y) < max_dist:
                 self._start_walk()
-                return"
+                return
 
         if self.state == "walk": self._do_walk()
         if self.state == "chase": self._do_chase()
