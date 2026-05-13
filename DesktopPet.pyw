@@ -259,21 +259,34 @@ class CoconutPet:
         self._start_chase()
 
     def _start_chase(self):
+        """开始追逐 — 持续追踪直到抓到或鼠标不动太久"""
         if self.state in ("walk", "chase", "eat"): return
         self.state = "chase"; self.mood = "happy"; self.st = 0
+        self.last_mx, self.last_my = self.win.winfo_pointerxy()
+        self.mouse_still_frames = 0  # 鼠标静止了多少帧
         self._particles(3, "star")
         self.say("来追你啦！\U0001f3c3")
 
     def _do_chase(self):
-        """Chase mouse — use CENTER of window for catch detection"""
-        # Use center of pet window for distance calculation
+        """连续追逐 — 不超时，鼠标不动太久才放弃"""
         cx = self.win.winfo_x() + self.W // 2
         cy = self.win.winfo_y() + self.H // 2
         mx, my = self.win.winfo_pointerxy()
         dx, dy = mx - cx, my - cy
         dist = math.hypot(dx, dy)
 
-        if dist < 35:  # Caught the cursor! (center to cursor)
+        # 检测鼠标是否在移动
+        mouse_dx = mx - self.last_mx
+        mouse_dy = my - self.last_my
+        mouse_moved = math.hypot(mouse_dx, mouse_dy) > 3
+        if mouse_moved:
+            self.mouse_still_frames = 0
+        else:
+            self.mouse_still_frames += 1
+        self.last_mx, self.last_my = mx, my
+
+        # 抓到光标
+        if dist < 35:
             self.state = "happy"; self.st = 0; self.cur_speed = 0.0
             self.mood = "love"
             self.happiness = min(100, self.happiness + 3)
@@ -282,6 +295,19 @@ class CoconutPet:
                 self.say(random.choice(["抓到啦！", "嘿嘿 \U0001f965", "找到你啦 \u2764\ufe0f"]))
             return
 
+        # 鼠标一直没动超过 3 秒 — 放弃
+        if self.mouse_still_frames > 100:
+            self.state = "idle"; self.cur_speed = 0.0
+            self.say("不跟我玩 😢")
+            return
+
+        # 鼠标跑太远 — 放弃
+        if dist > 1000:
+            self.state = "idle"; self.cur_speed = 0.0
+            self.say("跑太远了追不上...")
+            return
+
+        # 加减速移动
         max_speed = self.WALK_SPEED * 1.3
         if self.cur_speed < max_speed:
             self.cur_speed = min(max_speed, self.cur_speed + 0.5)
@@ -289,18 +315,12 @@ class CoconutPet:
             self.cur_speed = max(0.5, self.cur_speed * (dist / 50))
 
         if dist > self.cur_speed:
-            # Move the window's top-left corner, not center
             nx = (cx - self.W//2) + (dx / dist) * self.cur_speed
             ny = (cy - self.H//2) + (dy / dist) * self.cur_speed
             self.win.geometry(f"+{int(nx)}+{int(ny)}")
             self.mood = "happy"
         else:
             self.win.geometry(f"+{mx - self.W//2}+{my - self.H//2}")
-
-        self.st += 1
-        if self.st > 300:
-            self.state = "idle"; self.cur_speed = 0.0
-            self.say("跑太快了追不上 \U0001f62e\U0001f4a8")
 
     # ── Food ──
 
