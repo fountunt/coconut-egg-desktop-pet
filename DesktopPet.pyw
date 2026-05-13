@@ -119,6 +119,8 @@ class CoconutPet:
         self.bubble = ""
         self.bubble_id = None
         self.chase_on = False
+        self.cur_speed = 0.0       # current movement speed (for easing)
+        self.target_dist = 0.0     # distance to target when started
         self.food = None
         self.particles = []
         self.drag = {"x": 0, "y": 0, "active": False}
@@ -321,6 +323,7 @@ class CoconutPet:
 
     def _start_walk(self):
         if self.state == "walk": return
+        self.cur_speed = 0.5  # start slow for smooth acceleration
         m = self.SCREEN_MARGIN
         self.wtx = random.randint(m, self.sw - m - self.W)
         self.wty = random.randint(m, self.sh - m - self.H)
